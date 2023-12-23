@@ -9,6 +9,9 @@ pipeline {
     environment {
         NEXUS_VERSION = "nexus3"
         NEXUS_PROTOCOL = "http"
+        NEXUSIP = '34.229.121.152'
+        NEXUS_USER = 'admin'
+        NEXUS_PASS = 'admin'
         NEXUSPORT = '8081'
         NEXUS_URL = "172.31.40.209:8081"
         NEXUS_REPOSITORY = "vprofile-release"
