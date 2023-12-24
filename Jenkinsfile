@@ -23,8 +23,8 @@ pipeline {
         
         stage('BUILD'){
             steps {
-                // sh 'mvn clean install -DskipTests'
-                sh 'mvn install'
+                sh 'mvn clean install -DskipTests'
+                // sh 'mvn install'
             }
             post {
                 success {
