@@ -13,7 +13,7 @@ pipeline {
     environment {
         NEXUS_VERSION = "nexus3"
         NEXUS_PROTOCOL = "http"
-        NEXUSIP = '172.31.20.241'
+        NEXUSIP = '172.31.80.40'
         NEXUS_USER = 'admin'
         NEXUSPORT = '8081'
         NEXUS_URL = "172.31.20.241:8081"
@@ -97,7 +97,7 @@ pipeline {
                   artifacts: [
                     [artifactId: 'vproapp',
                      classifier: '',
-                     file: 'target/vprofile-v2.war',
+                     file: 'vprofile-v2.war',
                      type: 'war']
                   ]
                 )
