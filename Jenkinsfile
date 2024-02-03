@@ -25,65 +25,138 @@ pipeline {
 	
     stages{
         
-        stage('BUILD'){
-            steps {
-                sh 'mvn clean install -DskipTests'
-                // sh 'mvn install'
-            }
-            post {
-                success {
-                    echo 'Now Archiving...'
-                    archiveArtifacts artifacts: '**/target/*.war'
-                }
-            }
-        }
+    //     stage('BUILD'){
+    //         steps {
+    //             sh 'mvn clean install -DskipTests'
+    //             // sh 'mvn install'
+    //         }
+    //         post {
+    //             success {
+    //                 echo 'Now Archiving...'
+    //                 archiveArtifacts artifacts: '**/target/*.war'
+    //             }
+    //         }
+    //     }
 
-	stage('UNIT TEST'){
-            steps {
-                sh 'mvn test'
-            }
-        }
+	// stage('UNIT TEST'){
+    //         steps {
+    //             sh 'mvn test'
+    //         }
+    //     }
 
-	stage('INTEGRATION TEST'){
-            steps {
-                sh 'mvn verify -DskipUnitTests'
-            }
-        }
+	// stage('INTEGRATION TEST'){
+    //         steps {
+    //             sh 'mvn verify -DskipUnitTests'
+    //         }
+    //     }
 		
-        stage ('CODE ANALYSIS WITH CHECKSTYLE'){
+    //     stage ('CODE ANALYSIS WITH CHECKSTYLE'){
+    //         steps {
+    //             sh 'mvn checkstyle:checkstyle'
+    //         }
+    //         post {
+    //             success {
+    //                 echo 'Generated Analysis Result'
+    //             }
+    //         }
+    //     }
+
+    //     stage('CODE ANALYSIS with SONARQUBE') {
+          
+	// 	  environment {
+    //          scannerHome = tool 'sonarscanner'
+    //       }
+
+    //       steps {
+    //         withSonarQubeEnv('sonarserver') {
+    //            sh '''${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=vprofile \
+    //                -Dsonar.projectName=vprofile-repo \
+    //                -Dsonar.projectVersion=1.0 \
+    //                -Dsonar.sources=src/ \
+    //                -Dsonar.java.binaries=target/test-classes/com/visualpathit/account/controllerTest/ \
+    //                -Dsonar.junit.reportsPath=target/surefire-reports/ \
+    //                -Dsonar.jacoco.reportsPath=target/jacoco.exec \
+    //                -Dsonar.java.checkstyle.reportPaths=target/checkstyle-result.xml'''
+    //         }
+
+    //         // timeout(time: 10, unit: 'MINUTES') {
+    //         //    waitForQualityGate abortPipeline: true
+    //         // }
+    //       }
+    //     }
+    //     stage("UploadArtifact"){
+    //         steps{
+    //             nexusArtifactUploader(
+    //               nexusVersion: 'nexus3',
+    //               protocol: 'http',
+    //               nexusUrl: "${NEXUSIP}:${NEXUSPORT}",
+    //               groupId: 'QA',
+    //               version: "${env.BUILD_ID}-${env.BUILD_TIMESTAMP}",
+    //               repository: "${RELEASE_REPO}",
+    //               credentialsId: "${NEXUS_LOGIN}",
+    //               artifacts: [
+    //                 [artifactId: 'vproapp',
+    //                  classifier: '',
+    //                  file: 'target/vprofile-v2.war',
+    //                  type: 'war']
+    //               ]
+    //             )
+    //         }
+    //     }
+     stages {
+        stage('Build'){
             steps {
-                sh 'mvn checkstyle:checkstyle'
+                sh 'mvn -s settings.xml -DskipTests install'
             }
             post {
                 success {
-                    echo 'Generated Analysis Result'
+                    echo "Now Archiving."
+                    archiveArtifacts artifacts: '**/*.war'
                 }
             }
         }
 
-        stage('CODE ANALYSIS with SONARQUBE') {
-          
-		  environment {
-             scannerHome = tool 'sonarscanner'
-          }
+        stage('Test'){
+            steps {
+                sh 'mvn -s settings.xml test'
+            }
 
-          steps {
-            withSonarQubeEnv('sonarserver') {
-               sh '''${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=vprofile \
-                   -Dsonar.projectName=vprofile-repo \
+        }
+
+        stage('Checkstyle Analysis'){
+            steps {
+                sh 'mvn -s settings.xml checkstyle:checkstyle'
+            }
+        }
+
+        stage('Sonar Analysis') {
+            environment {
+                scannerHome = tool "${SONARSCANNER}"
+            }
+            steps {
+               withSonarQubeEnv("${SONARSERVER}") {
+                   sh '''${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=vprofile \
+                   -Dsonar.projectName=vprofile \
                    -Dsonar.projectVersion=1.0 \
                    -Dsonar.sources=src/ \
                    -Dsonar.java.binaries=target/test-classes/com/visualpathit/account/controllerTest/ \
                    -Dsonar.junit.reportsPath=target/surefire-reports/ \
                    -Dsonar.jacoco.reportsPath=target/jacoco.exec \
                    -Dsonar.java.checkstyle.reportPaths=target/checkstyle-result.xml'''
+              }
             }
-
-            // timeout(time: 10, unit: 'MINUTES') {
-            //    waitForQualityGate abortPipeline: true
-            // }
-          }
         }
+
+        stage("Quality Gate") {
+            steps {
+                timeout(time: 1, unit: 'HOURS') {
+                    // Parameter indicates whether to set pipeline to UNSTABLE if Quality Gate fails
+                    // true = set pipeline to UNSTABLE, false = don't
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
+
         stage("UploadArtifact"){
             steps{
                 nexusArtifactUploader(
@@ -103,6 +176,7 @@ pipeline {
                 )
             }
         }
+    }
 
         // stage("Publish to Nexus Repository Manager") {
         //     steps {
